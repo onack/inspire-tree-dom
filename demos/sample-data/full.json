@@ -5,9 +5,7 @@
         "children": [{
             "text": "Joe Hidden",
             "itree": {
-                "state": {
-                    "removed": true
-                }
+                "icon": "icon-test"
             }
         }, {
             "age": 37,

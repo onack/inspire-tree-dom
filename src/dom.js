@@ -32,16 +32,26 @@ export default class InspireDOM {
         // Let InspireTree know we're in control of a node's `rendered` state
         tree.usesNativeDOM = true;
 
+        const dndDefaults = {
+            enabled: true,
+            validateOn: 'dragstart',
+            validate: false
+        };
+
         // Assign defaults
-        this.config = _.defaults({}, opts, {
+        this.config = _.defaultsDeep({}, opts, {
             autoLoadMore: true,
             deferredRendering: false,
-            dragAndDrop: false,
+            dragAndDrop: dndDefaults,
             nodeHeight: 25,
             showCheckboxes: false,
             tabindex: -1,
             target: false
         });
+
+        if (this.config.dragAndDrop === true) {
+            this.config.dragAndDrop = dndDefaults;
+        }
 
         // If user didn't specify showCheckboxes,
         // but is using checkbox selection mode,
@@ -110,7 +120,7 @@ export default class InspireDOM {
         this.$target.addEventListener('keyup', this.keyboardListener.bind(this));
 
         // Drag and drop listeners
-        if (this.config.dragAndDrop) {
+        if (this.config.dragAndDrop.enabled) {
             this.$target.addEventListener('dragenter', this.onDragEnter.bind(this), false);
             this.$target.addEventListener('dragleave', this.onDragLeave.bind(this), false);
             this.$target.addEventListener('dragover', this.onDragOver.bind(this), false);
@@ -305,7 +315,7 @@ export default class InspireDOM {
     onDragEnter(event) {
         event.preventDefault();
 
-        event.target.classList.add('itree-droppable-active');
+        event.target.classList.add('drag-targeting', 'drag-targeting-insert');
     }
 
     /**
@@ -345,14 +355,19 @@ export default class InspireDOM {
     onDrop(event) {
         event.preventDefault();
 
+        this.unhighlightTarget(event.target);
+
         let treeId = event.dataTransfer.getData('treeId');
         let nodeId = event.dataTransfer.getData('nodeId');
 
         // Find the tree
         const tree = InspireDOM.getTreeById(treeId);
+        const node = tree.node(nodeId);
+
+        node.state('drop-target', true);
 
         // Remove the node from its previous context
-        let exported = tree.node(nodeId).remove(true);
+        let exported = node.remove(true);
 
         // Add the node to this tree/level
         var newNode = this._tree.addNode(exported);
@@ -429,12 +444,12 @@ export default class InspireDOM {
      *
      * @category DOM
      * @private
-     * @param {HTMLElement} node Target element.
+     * @param {HTMLElement} element Target element.
      * @return {void}
      */
-    unhighlightTarget(node) {
-        if (node) {
-            node.classList.remove('itree-droppable-active');
+    unhighlightTarget(element) {
+        if (element) {
+            element.classList.remove('drag-targeting', 'drag-targeting-insert');
         }
     }
 }
